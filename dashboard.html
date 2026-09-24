@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Admin — Aqiqah Nurul Hayat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="style.css">
+<style>
+  .dash-wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
+  .topbar .right { display: flex; align-items: center; gap: 14px; }
+  .topbar .username { font-size: 14px; color: var(--text-muted); }
+
+  .hero-card { padding: 26px 30px; margin-bottom: 8px; display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+  .hero-ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
+  .hero-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .hero-ring circle { fill: none; stroke-width: 10; }
+  .hero-ring .bg { stroke: var(--brown-100); }
+  .hero-ring .fg { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .hero-ring .pct { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; }
+  .hero-text .big { font-size: 30px; font-weight: 800; line-height: 1.15; }
+  .hero-text .big .of { font-size: 16px; font-weight: 700; color: var(--text-muted); }
+  .hero-text .label { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
+
+  .section-title { font-size: 16px; font-weight: 800; margin: 26px 0 12px; }
+  .panel { padding: 18px; }
+
+  #map { height: 340px; border-radius: 10px; }
+
+  .filter-row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
+  .filter-row .field { margin-bottom: 0; }
+  .filter-row .field label { margin-bottom: 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 10px 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
+  td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  td.thumb img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; display: block; background: var(--brown-100); }
+  .table-scroll { overflow-x: auto; }
+  .empty-state { text-align: center; padding: 32px 12px; color: var(--text-muted); }
+
+  .pending-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border-bottom: 1px solid var(--border); }
+  .pending-row:last-child { border-bottom: none; }
+  .pending-row .btn { padding: 8px 16px; font-size: 14px; }
+
+  @media (max-width: 640px) {
+    .hero-card { padding: 20px; }
+    .hero-text .big { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <img src="assets/logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
+    <div class="right">
+      <span class="username" id="usernameLabel"></span>
+      <button class="btn btn-outline" id="logoutBtn" style="padding:8px 16px; font-size:14px;">Keluar</button>
+    </div>
+  </header>
+
+  <main class="dash-wrap">
+    <div class="card hero-card">
+      <div class="hero-ring">
+        <svg viewBox="0 0 120 120">
+          <circle class="bg" cx="60" cy="60" r="50"></circle>
+          <circle class="fg" id="progressCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"></circle>
+        </svg>
+        <div class="pct" id="progressPct">0%</div>
+      </div>
+      <div class="hero-text">
+        <div class="big"><span id="monthlyCount">0</span> <span class="of">/ 1000 banner terpasang</span></div>
+        <div class="label" id="monthLabel">Bulan ini</div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Peta lokasi pemasangan</h2>
+    <div class="card panel">
+      <div id="map"></div>
+    </div>
+
+    <h2 class="section-title">Data laporan</h2>
+    <div class="card panel">
+      <div class="filter-row">
+        <div class="field">
+          <label for="dateFrom">Dari tanggal</label>
+          <input type="date" id="dateFrom">
+        </div>
+        <div class="field">
+          <label for="dateTo">Sampai tanggal</label>
+          <input type="date" id="dateTo">
+        </div>
+        <button class="btn btn-outline" id="exportBtn" style="padding:10px 18px; font-size:14px;">Unduh CSV</button>
+      </div>
+      <div class="table-scroll">
+        <table id="reportTable">
+          <thead>
+            <tr><th>Foto</th><th>Tanggal</th><th>Waktu</th><th>Koordinat</th></tr>
+          </thead>
+          <tbody id="reportBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" style="display:none;">Belum ada laporan masuk.</div>
+      </div>
+    </div>
+
+    <div id="pendingSection" style="display:none;">
+      <h2 class="section-title">Menunggu persetujuan</h2>
+      <div class="card panel" id="pendingPanel"></div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const token = sessionStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+    document.getElementById('usernameLabel').textContent = sessionStorage.getItem('username') || '';
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    let allReports = [];
+    let map, markerLayer;
+
+    function initMap() {
+      map = L.map('map').setView([-7.98, 112.63], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+      markerLayer = L.layerGroup().addTo(map);
+    }
+
+    function renderMap(reports) {
+      markerLayer.clearLayers();
+      const points = reports.filter(r => r.latitude && r.longitude);
+      points.forEach(r => {
+        L.marker([r.latitude, r.longitude])
+          .bindPopup(new Date(r.timestamp).toLocaleString('id-ID'))
+          .addTo(markerLayer);
+      });
+      if (points.length) {
+        map.fitBounds(L.latLngBounds(points.map(r => [r.latitude, r.longitude])), { padding: [24, 24] });
+      }
+    }
+
+    function renderProgress(count, target) {
+      const pct = Math.min(100, Math.round((count / target) * 100));
+      document.getElementById('monthlyCount').textContent = count;
+      document.getElementById('progressPct').textContent = pct + '%';
+      document.getElementById('monthLabel').textContent = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+      const circumference = 314;
+      document.getElementById('progressCircle').style.strokeDashoffset = circumference - (circumference * pct / 100);
+    }
+
+    function renderTable(reports) {
+      const tbody = document.getElementById('reportBody');
+      const emptyState = document.getElementById('emptyState');
+      tbody.innerHTML = '';
+      if (!reports.length) { emptyState.style.display = 'block'; return; }
+      emptyState.style.display = 'none';
+      reports.forEach(r => {
+        const d = new Date(r.timestamp);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="thumb"><img src="${r.fotoUrl}" alt="Foto banner" loading="lazy"></td>
+          <td>${d.toLocaleDateString('id-ID')}</td>
+          <td>${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
+          <td>${r.latitude && r.longitude ? Number(r.latitude).toFixed(5) + ', ' + Number(r.longitude).toFixed(5) : '—'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getFiltered() {
+      const from = document.getElementById('dateFrom').value;
+      const to = document.getElementById('dateTo').value;
+      let filtered = allReports;
+      if (from) filtered = filtered.filter(r => new Date(r.timestamp) >= new Date(from));
+      if (to) filtered = filtered.filter(r => new Date(r.timestamp) <= new Date(to + 'T23:59:59'));
+      return filtered;
+    }
+
+    function applyFilter() {
+      const filtered = getFiltered();
+      renderTable(filtered);
+      renderMap(filtered);
+    }
+
+    document.getElementById('dateFrom').addEventListener('change', applyFilter);
+    document.getElementById('dateTo').addEventListener('change', applyFilter);
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const rows = getFiltered();
+      let csv = 'Tanggal,Waktu,Latitude,Longitude,URL Foto\n';
+      rows.forEach(r => {
+        const d = new Date(r.timestamp);
+        csv += `${d.toLocaleDateString('id-ID')},${d.toLocaleTimeString('id-ID')},${r.latitude || ''},${r.longitude || ''},${r.fotoUrl}\n`;
+      });
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'laporan-banner-pohon.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    async function loadReports() {
+      try {
+        const res = await fetch(`${API_URL}?action=getReports&token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        allReports = data.reports;
+        renderProgress(data.monthlyCount, data.monthlyTarget);
+        renderTable(allReports);
+        renderMap(allReports);
+      } catch (err) {
+        if (err.message && err.message.includes('login')) {
+          sessionStorage.clear();
+          window.location.href = 'login.html';
+        }
+      }
+    }
+
+    async function loadPendingUsers() {
+      try {
+        const res = await fetch(`${API_URL}?action=getPendingUsers&token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (!data.ok || !data.pending.length) return;
+        const panel = document.getElementById('pendingPanel');
+        panel.innerHTML = '';
+        data.pending.forEach(u => {
+          const row = document.createElement('div');
+          row.className = 'pending-row';
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = u.username;
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-primary';
+          btn.textContent = 'Setujui';
+          btn.addEventListener('click', () => approveUser(u.username, btn));
+          row.appendChild(nameSpan);
+          row.appendChild(btn);
+          panel.appendChild(row);
+        });
+        document.getElementById('pendingSection').style.display = 'block';
+      } catch (err) { /* bukan fitur kritis, diamkan kalau gagal */ }
+    }
+
+    async function approveUser(username, btn) {
+      btn.disabled = true; btn.textContent = 'Memproses…';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'approveUser', token, username })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        loadPendingUsers();
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Setujui';
+        alert('Gagal menyetujui: ' + err.message);
+      }
+    }
+
+    initMap();
+    loadReports();
+    loadPendingUsers();
+  </script>
+</body>
+</html>

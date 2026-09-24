@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk Admin — Aqiqah Nurul Hayat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .auth-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .auth-card { width: 100%; max-width: 380px; padding: 32px 28px; text-align: center; }
+  .auth-card img.logo { height: 40px; margin: 0 auto 20px; }
+  .auth-card h1 { font-size: 19px; margin: 0 0 4px; }
+  .auth-card p.sub { color: var(--text-muted); font-size: 14px; margin: 0 0 22px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--brown-100); border-radius: 999px; padding: 4px; margin-bottom: 24px; }
+  .tab-btn {
+    flex: 1; border: none; background: none; padding: 9px 0; border-radius: 999px;
+    font-family: inherit; font-weight: 700; font-size: 14px; color: var(--brown-500); cursor: pointer;
+  }
+  .tab-btn.active { background: var(--white); color: var(--brown-900); box-shadow: 0 1px 3px rgba(64, 44, 43, 0.12); }
+
+  form { text-align: left; }
+  .auth-card .btn { width: 100%; margin-top: 6px; }
+  .back-link { display: block; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="card auth-card">
+      <img src="assets/logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
+
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin" type="button">Masuk</button>
+        <button class="tab-btn" id="tabRegister" type="button">Daftar</button>
+      </div>
+
+      <div id="loginPanel">
+        <h1>Masuk sebagai admin</h1>
+        <p class="sub">Pantau data pemasangan banner</p>
+        <div id="loginAlert" class="alert alert-error" style="display:none;"></div>
+        <form id="loginForm">
+          <div class="field">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary" id="loginBtn">Masuk</button>
+        </form>
+      </div>
+
+      <div id="registerPanel" style="display:none;">
+        <h1>Daftar akun admin</h1>
+        <p class="sub">Akun baru menunggu persetujuan sebelum bisa masuk</p>
+        <div id="registerAlert" class="alert alert-error" style="display:none;"></div>
+        <div id="registerSuccess" class="alert alert-success" style="display:none;"></div>
+        <form id="registerForm">
+          <div class="field">
+            <label for="regUsername">Username</label>
+            <input type="text" id="regUsername" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" required autocomplete="new-password" minlength="6">
+          </div>
+          <div class="field">
+            <label for="regPasswordConfirm">Ulangi password</label>
+            <input type="password" id="regPasswordConfirm" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary" id="registerBtn">Daftar</button>
+        </form>
+      </div>
+
+      <a href="index.html" class="btn-text back-link">← Kembali ke halaman vendor</a>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    if (sessionStorage.getItem('token')) window.location.href = 'dashboard.html';
+
+    const tabLogin = document.getElementById('tabLogin');
+    const tabRegister = document.getElementById('tabRegister');
+    const loginPanel = document.getElementById('loginPanel');
+    const registerPanel = document.getElementById('registerPanel');
+
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+      loginPanel.style.display = 'block'; registerPanel.style.display = 'none';
+    });
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('active'); tabLogin.classList.remove('active');
+      registerPanel.style.display = 'block'; loginPanel.style.display = 'none';
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const loginAlert = document.getElementById('loginAlert');
+      const loginBtn = document.getElementById('loginBtn');
+      loginAlert.style.display = 'none';
+      loginBtn.disabled = true; loginBtn.textContent = 'Memproses…';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'login',
+            username: document.getElementById('loginUsername').value.trim(),
+            password: document.getElementById('loginPassword').value
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('username', data.username);
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        loginAlert.textContent = err.message;
+        loginAlert.style.display = 'block';
+        loginBtn.disabled = false; loginBtn.textContent = 'Masuk';
+      }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const registerAlert = document.getElementById('registerAlert');
+      const registerSuccess = document.getElementById('registerSuccess');
+      const registerBtn = document.getElementById('registerBtn');
+      registerAlert.style.display = 'none';
+      registerSuccess.style.display = 'none';
+
+      const pass = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regPasswordConfirm').value;
+      if (pass !== confirm) {
+        registerAlert.textContent = 'Password tidak sama';
+        registerAlert.style.display = 'block';
+        return;
+      }
+
+      registerBtn.disabled = true; registerBtn.textContent = 'Memproses…';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'register',
+            username: document.getElementById('regUsername').value.trim(),
+            password: pass
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        registerSuccess.textContent = data.message;
+        registerSuccess.style.display = 'block';
+        document.getElementById('registerForm').reset();
+      } catch (err) {
+        registerAlert.textContent = err.message;
+        registerAlert.style.display = 'block';
+      } finally {
+        registerBtn.disabled = false; registerBtn.textContent = 'Daftar';
+      }
+    });
+  </script>
+</body>
+</html>
