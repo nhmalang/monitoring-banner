@@ -7,79 +7,48 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital@1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon-aqq.png" />
 <style>
   .vendor-wrap { max-width: 460px; margin: 0 auto; padding: 28px 20px 60px; }
   .intro { text-align: center; margin-bottom: 22px; }
   .intro h1 { font-size: 21px; margin: 0 0 6px; }
   .intro p { font-size: 15px; margin: 0; }
-
-  .capture-zone {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    border-radius: 20px;
-    border: 2px dashed var(--brown-200);
-    background: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    cursor: pointer;
-    margin-bottom: 16px;
-  }
+  .capture-zone { position: relative; aspect-ratio: 4 / 3; border-radius: 20px; border: 2px dashed var(--brown-200); background: var(--white); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; margin-bottom: 16px; }
   .capture-zone.has-photo { border-style: solid; border-color: var(--gold); }
   .capture-zone img { width: 100%; height: 100%; object-fit: cover; }
   .capture-placeholder { text-align: center; color: var(--brown-500); padding: 20px; }
   .capture-placeholder svg { width: 52px; height: 52px; margin-bottom: 8px; }
   .capture-placeholder p { margin: 0; font-weight: 700; font-size: 16px; color: var(--brown-700); }
   .capture-placeholder span { font-size: 13px; color: var(--text-muted); }
-
-  .status-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    justify-content: center;
-    font-size: 14px;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    min-height: 20px;
-    text-align: center;
-  }
+  .status-row { display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 14px; color: var(--text-muted); margin-bottom: 20px; min-height: 20px; text-align: center; }
   .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brown-200); flex-shrink: 0; }
   .status-dot.ready { background: var(--success); }
   .status-dot.warn { background: var(--gold-dark); }
   .status-dot.pulsing { animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-
+  .retry-row { text-align: center; margin-bottom: 20px; }
+  .retry-row .btn { padding: 9px 20px; font-size: 14px; }
+  .gallery-row { text-align: center; margin-bottom: 18px; }
   .submit-row .btn { width: 100%; }
-
   .success-screen { text-align: center; padding: 48px 20px; }
-  .success-check {
-    width: 72px; height: 72px; border-radius: 50%;
-    background: var(--success-bg); color: var(--success);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 18px;
-  }
+  .success-check { width: 72px; height: 72px; border-radius: 50%; background: var(--success-bg); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
   .success-check svg { width: 34px; height: 34px; }
   .success-meta { color: var(--text-muted); font-size: 14px; margin: 4px 0 28px; }
-
   input[type="file"] { display: none; }
 </style>
 </head>
 <body>
   <header class="topbar">
-    <img src="assets/logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
-    <a href="login.html" class="menu-btn" aria-label="Masuk sebagai admin">
-      <span></span><span></span><span></span>
-    </a>
+    <img src="logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
+    <h4>Cabang Malang</h4>
+    <a href="login.html" class="menu-btn" aria-label="Masuk sebagai admin"><span></span><span></span><span></span></a>
   </header>
-
   <main class="vendor-wrap">
     <div id="formView">
       <div class="intro">
         <h1>Lapor pemasangan banner</h1>
         <p class="serif-accent">Foto banner yang terpasang, lalu kirim</p>
       </div>
-
       <div class="capture-zone" id="captureZone" role="button" tabindex="0" aria-label="Ambil foto banner">
         <div class="capture-placeholder" id="capturePlaceholder">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -89,19 +58,22 @@
         <img id="previewImg" alt="" style="display:none;">
       </div>
       <input type="file" id="fileInput" accept="image/*" capture="environment">
-
+      <input type="file" id="galleryInput" accept="image/*">
+      <div class="gallery-row">
+        <button type="button" class="btn-text" id="galleryBtn">Atau upload foto dari galeri</button>
+      </div>
       <div class="status-row">
         <span class="status-dot pulsing" id="statusDot"></span>
         <span id="statusText">Mengambil lokasi…</span>
       </div>
-
+      <div class="retry-row" id="retryLocationRow" style="display:none;">
+        <button class="btn btn-outline" id="retryLocationBtn" type="button">Coba ambil lokasi lagi</button>
+      </div>
       <div class="submit-row">
         <button class="btn btn-primary" id="submitBtn" disabled>Kirim laporan</button>
       </div>
-
       <div id="errorAlert" class="alert alert-error" style="display:none; margin-top:16px;"></div>
     </div>
-
     <div id="successView" class="success-screen" style="display:none;">
       <div class="success-check">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12l5 5L20 6"/></svg>
@@ -112,15 +84,21 @@
     </div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="config.js"></script>
   <script>
     let photoDataUrl = null;
     let coords = null;
+    let capturedAt = null;
+    let retryAction = requestLocation;
 
     const captureZone = document.getElementById('captureZone');
     const capturePlaceholder = document.getElementById('capturePlaceholder');
     const previewImg = document.getElementById('previewImg');
     const fileInput = document.getElementById('fileInput');
+    const galleryInput = document.getElementById('galleryInput');
+    const galleryBtn = document.getElementById('galleryBtn');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
     const submitBtn = document.getElementById('submitBtn');
@@ -129,22 +107,37 @@
     const successView = document.getElementById('successView');
     const successMeta = document.getElementById('successMeta');
     const resetBtn = document.getElementById('resetBtn');
+    const retryLocationRow = document.getElementById('retryLocationRow');
+    const retryLocationBtn = document.getElementById('retryLocationBtn');
 
     captureZone.addEventListener('click', () => fileInput.click());
-    captureZone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+    galleryBtn.addEventListener('click', () => galleryInput.click());
 
-    fileInput.addEventListener('change', async () => {
-      const file = fileInput.files[0];
-      if (!file) return;
+    async function applySelectedPhoto(file) {
       photoDataUrl = await compressImage(file);
       previewImg.src = photoDataUrl;
       previewImg.style.display = 'block';
       capturePlaceholder.style.display = 'none';
       captureZone.classList.add('has-photo');
       updateSubmitState();
+    }
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      capturedAt = null;
+      await applySelectedPhoto(file);
+      requestLocation();
     });
 
-    function compressImage(file, maxWidth = 1280, quality = 0.75) {
+    galleryInput.addEventListener('change', async () => {
+      const file = galleryInput.files[0];
+      if (!file) return;
+      await applySelectedPhoto(file);
+      await extractLocationFromExif(file);
+    });
+
+    function compressImage(file, maxWidth = 1080, quality = 0.75) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -166,78 +159,179 @@
     }
 
     function requestLocation() {
+      coords = null; updateSubmitState();
+      retryLocationRow.style.display = 'none';
+      statusDot.className = 'status-dot pulsing';
+      statusText.textContent = 'Mengambil lokasi saat ini…';
       if (!navigator.geolocation) {
-        statusDot.classList.remove('pulsing');
-        statusDot.classList.add('warn');
-        statusText.textContent = 'Perangkat tidak mendukung lokasi otomatis — laporan tetap bisa dikirim';
+        statusDot.className = 'status-dot warn';
+        statusText.textContent = 'GPS tidak didukung oleh browser';
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          statusDot.classList.remove('pulsing');
-          statusDot.classList.add('ready');
-          statusText.textContent = 'Lokasi ditemukan';
+          statusDot.className = 'status-dot ready';
+          statusText.textContent = 'Lokasi ditemukan (Real-time GPS)';
+          updateSubmitState();
         },
         () => {
-          statusDot.classList.remove('pulsing');
-          statusDot.classList.add('warn');
-          statusText.textContent = 'Lokasi tidak diizinkan — laporan tetap bisa dikirim';
-        },
-        { enableHighAccuracy: true, timeout: 15000 }
+          statusDot.className = 'status-dot warn';
+          statusText.textContent = 'Gagal mendapat sinyal GPS, coba lagi';
+          retryAction = requestLocation;
+          retryLocationBtn.textContent = 'Coba ambil lokasi lagi';
+          retryLocationRow.style.display = 'block';
+          updateSubmitState();
+        }, { enableHighAccuracy: true, timeout: 15000 }
       );
     }
 
-    function updateSubmitState() {
-      submitBtn.disabled = !photoDataUrl;
+    async function extractLocationFromExif(file) {
+      coords = null; capturedAt = null;
+      retryLocationRow.style.display = 'none';
+      statusDot.className = 'status-dot pulsing';
+      statusText.textContent = 'Membaca lokasi dari EXIF foto…';
+      updateSubmitState();
+
+      let gpsFound = false;
+      try {
+        if (typeof exifr !== 'undefined') {
+          const gps = await exifr.gps(file);
+          if (gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude)) {
+            coords = { lat: gps.latitude, lng: gps.longitude };
+            gpsFound = true;
+          }
+          const exifData = await exifr.parse(file, ['DateTimeOriginal']);
+          if (exifData && exifData.DateTimeOriginal instanceof Date) capturedAt = exifData.DateTimeOriginal;
+        }
+      } catch (e) { console.warn("EXIF GPS Tidak Ditemukan", e); }
+
+      let locationSource = 'EXIF';
+      let ocrResult = null;
+
+      if (!gpsFound) {
+        statusText.textContent = 'EXIF kosong, memindai koordinat dari gambar (OCR)…';
+        await new Promise(resolve => setTimeout(resolve, 50)); 
+        try {
+          ocrResult = await extractPhotoText(file);
+          if (ocrResult && ocrResult.coords) {
+            coords = ocrResult.coords;
+            gpsFound = true;
+            locationSource = 'teks pada foto (OCR)';
+          }
+          if (!capturedAt && ocrResult && ocrResult.capturedAt) capturedAt = ocrResult.capturedAt;
+        } catch (e) {
+          console.warn('OCR gagal:', e);
+          statusText.textContent = `Gagal memindai teks: ${e.message}`;
+        }
+      }
+
+      if (gpsFound) {
+        statusDot.className = 'status-dot ready';
+        statusText.textContent = locationSource === 'EXIF' ? 'Titik koordinat EXIF ditemukan!' : 'Koordinat berhasil dibaca dari teks foto!';
+      } else {
+        statusDot.className = 'status-dot warn';
+        if (!statusText.textContent.includes('Gagal')) statusText.textContent = 'Tidak ada koordinat. Pastikan watermark terlihat jelas.';
+        retryAction = () => galleryInput.click();
+        retryLocationBtn.textContent = 'Pilih foto lain';
+        retryLocationRow.style.display = 'block';
+      }
+      updateSubmitState();
     }
 
+    async function extractPhotoText(file) {
+      if (typeof Tesseract === 'undefined') throw new Error('Pustaka OCR tidak termuat.');
+      let imageUrl = photoDataUrl;
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('Gambar rusak.')); img.src = imageUrl;
+      });
+
+      const cropSpecs = [
+        { x: 0.20, y: 0.80, w: 0.80, h: 0.20, label: 'Kanan Bawah (Fokus Koordinat)' },
+        { x: 0.00, y: 0.75, w: 1.00, h: 0.25, label: 'Seluruh Bawah' }
+      ];
+
+      const makeCrop = (spec) => {
+        const sx = Math.floor(image.width * spec.x), sy = Math.floor(image.height * spec.y);
+        const sw = Math.max(1, Math.floor(image.width * spec.w)), sh = Math.max(1, Math.floor(image.height * spec.h));
+        const canvas = document.createElement('canvas'); canvas.width = sw; canvas.height = sh;
+        canvas.getContext('2d').drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+        return canvas;
+      };
+
+      const parseCoordinates = (rawText) => {
+        const text = String(rawText || '').replace(/[−–—]/g, '-').replace(/[Oo]/g, '0').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ');
+        const patterns = [ /(-?\d{1,3}[,.]\d{4,})\s*[,; ]+\s*(\d{2,3}[,.]\d{4,})/ ];
+        for (const pattern of patterns) {
+          const m = text.match(pattern);
+          if (!m) continue;
+          let lat = Number(m[1].replace(',', '.')), lng = Number(m[2].replace(',', '.'));
+          if (Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+        }
+        return null;
+      };
+
+      const parsePhotoDateTime = (rawText) => {
+        let text = String(rawText || '').replace(/[|]/g, '1').replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+        const months = { jan:0, februari:1, maret:2, april:3, mei:4, juni:5, juli:6, agustus:7, september:8, oktober:9, november:10, desember:11, okt:9, ags:7, sep:8, nov:10, des:11 };
+        const monthNames = Object.keys(months).join('|');
+        const re = new RegExp('\\b(\\d{1,2})\\s+(' + monthNames + ')\\s+(20\\d{2})\\s+(\\d{1,2})[.: ](\\d{2})(?:[.: ](\\d{2}))?\\b', 'i');
+        let m = text.match(re);
+        if (m) return new Date(Number(m[3]), months[m[2].toLowerCase()], Number(m[1]), Number(m[4]), Number(m[5]), Number(m[6] || 0));
+        return null;
+      };
+
+      let foundCoords = null; let foundDate = null; let lastText = '';
+      for (let cropIndex = 0; cropIndex < cropSpecs.length; cropIndex++) {
+        const spec = cropSpecs[cropIndex];
+        statusText.textContent = `Memindai ${spec.label}…`;
+        await new Promise(resolve => setTimeout(resolve, 50));
+        const canvas = makeCrop(spec);
+        const result = await Tesseract.recognize(canvas, 'eng', {
+          logger: (m) => { if (m.status === 'recognizing text' && m.progress) statusText.textContent = `Memindai teks… ${Math.round(m.progress * 100)}%`; },
+          tessedit_char_whitelist: '0123456789.,:/-°mMabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ', preserve_interword_spaces: '1'
+        });
+        lastText = (result && result.data && result.data.text) || '';
+        if (!foundCoords) foundCoords = parseCoordinates(lastText);
+        if (!foundDate) foundDate = parsePhotoDateTime(lastText);
+        if (foundCoords) break;
+      }
+      return { coords: foundCoords, capturedAt: foundDate };
+    }
+
+    function updateSubmitState() { submitBtn.disabled = !(photoDataUrl && coords); }
+
     submitBtn.addEventListener('click', async () => {
-      errorAlert.style.display = 'none';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Mengirim…';
+      errorAlert.style.display = 'none'; submitBtn.disabled = true; submitBtn.textContent = 'Mengirim Laporan…';
       try {
         const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
-            action: 'submitReport',
-            photoBase64: photoDataUrl,
-            latitude: coords ? coords.lat : '',
-            longitude: coords ? coords.lng : ''
+            action: 'submitReport', photoBase64: photoDataUrl, latitude: coords ? coords.lat : '', longitude: coords ? coords.lng : '', capturedAt: capturedAt ? capturedAt.toISOString() : ''
           })
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Gagal mengirim laporan');
-
         successMeta.textContent = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
-        formView.style.display = 'none';
-        successView.style.display = 'block';
+        formView.style.display = 'none'; successView.style.display = 'block';
       } catch (err) {
-        errorAlert.textContent = 'Gagal mengirim: ' + err.message + '. Periksa koneksi internet lalu coba lagi.';
-        errorAlert.style.display = 'block';
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Kirim laporan';
+        errorAlert.textContent = 'Gagal mengirim: ' + err.message + '. Coba lagi.';
+        errorAlert.style.display = 'block'; submitBtn.disabled = false; submitBtn.textContent = 'Kirim laporan';
       }
     });
 
     resetBtn.addEventListener('click', () => {
-      photoDataUrl = null;
-      coords = null;
-      previewImg.style.display = 'none';
-      previewImg.src = '';
-      capturePlaceholder.style.display = 'block';
-      captureZone.classList.remove('has-photo');
-      fileInput.value = '';
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Kirim laporan';
-      statusDot.className = 'status-dot pulsing';
-      statusText.textContent = 'Mengambil lokasi…';
-      successView.style.display = 'none';
-      formView.style.display = 'block';
+      photoDataUrl = null; coords = null; capturedAt = null;
+      previewImg.style.display = 'none'; previewImg.src = '';
+      capturePlaceholder.style.display = 'block'; captureZone.classList.remove('has-photo');
+      fileInput.value = ''; galleryInput.value = '';
+      submitBtn.disabled = true; submitBtn.textContent = 'Kirim laporan';
+      statusDot.className = 'status-dot pulsing'; statusText.textContent = 'Mengambil lokasi saat ini…';
+      successView.style.display = 'none'; formView.style.display = 'block';
       requestLocation();
     });
 
+    retryLocationBtn.addEventListener('click', () => retryAction());
     requestLocation();
   </script>
 </body>
