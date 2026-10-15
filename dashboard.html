@@ -8,11 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Lora:ital@1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="favicon-aqq.png" />
 <style>
   .dash-wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 60px; }
   .topbar .right { display: flex; align-items: center; gap: 14px; }
   .topbar .username { font-size: 14px; color: var(--text-muted); }
-
   .hero-card { padding: 26px 30px; margin-bottom: 8px; display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
   .hero-ring { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
   .hero-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -23,36 +23,54 @@
   .hero-text .big { font-size: 30px; font-weight: 800; line-height: 1.15; }
   .hero-text .big .of { font-size: 16px; font-weight: 700; color: var(--text-muted); }
   .hero-text .label { color: var(--text-muted); font-size: 14px; margin-top: 2px; }
-
+  .hero-fee { margin-left: auto; text-align: right; }
+  .fee-amount { font-size: 22px; font-weight: 800; color: var(--brown-900); line-height: 1.15; }
+  .fee-label { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .badge-verified, .badge-unverified { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .badge-verified { background: var(--success-bg); color: var(--success); }
+  .badge-unverified { background: var(--brown-100); color: var(--text-muted); }
+  .verify-btn { padding: 7px 14px; font-size: 13px; }
+  .btn-text-danger { background: none; border: none; color: var(--danger); padding: 8px 4px; text-decoration: underline; text-underline-offset: 3px; font-weight: 700; font-size: 14px; font-family: inherit; cursor: pointer; }
+  .warn-nearby { font-size: 11px; color: var(--danger); margin-top: 4px; max-width: 160px; }
+  .filtered-fee-row { font-size: 14px; color: var(--text-muted); margin-bottom: 14px; }
+  .filtered-fee-row strong { color: var(--brown-900); font-size: 15px; }
   .section-title { font-size: 16px; font-weight: 800; margin: 26px 0 12px; }
   .panel { padding: 18px; }
-
-  #map { height: 340px; border-radius: 10px; }
-
+  #map { height: 380px; border-radius: 10px; }
   .filter-row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
   .filter-row .field { margin-bottom: 0; }
   .filter-row .field label { margin-bottom: 4px; }
-
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th { text-align: left; padding: 10px 8px; color: var(--text-muted); font-size: 12px; font-weight: 700; border-bottom: 1.5px solid var(--border); white-space: nowrap; }
   td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  td.thumb img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; display: block; background: var(--brown-100); }
+  td.thumb img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; display: block; background: var(--brown-100); cursor: pointer; }
   .table-scroll { overflow-x: auto; }
   .empty-state { text-align: center; padding: 32px 12px; color: var(--text-muted); }
-
   .pending-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border-bottom: 1px solid var(--border); }
   .pending-row:last-child { border-bottom: none; }
   .pending-row .btn { padding: 8px 16px; font-size: 14px; }
-
-  @media (max-width: 640px) {
-    .hero-card { padding: 20px; }
-    .hero-text .big { font-size: 26px; }
-  }
+  .photo-modal { display: none; position: fixed; inset: 0; background: rgba(20, 12, 8, 0.85); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+  .photo-modal.open { display: flex; }
+  .photo-modal-inner { display: flex; flex-direction: column; align-items: center; max-width: 100%; max-height: 100%; }
+  .photo-modal-inner img { max-width: 100%; max-height: calc(100vh - 120px); border-radius: 10px; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5); display: block; }
+  .photo-modal-caption { color: rgba(255, 255, 255, 0.85); text-align: center; margin-top: 14px; font-size: 14px; }
+  .photo-modal-close { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: none; color: #fff; font-size: 18px; cursor: pointer; }
+  .photo-modal-close:hover { background: rgba(255, 255, 255, 0.22); }
+  @media (max-width: 640px) { .hero-card { padding: 20px; } .hero-text .big { font-size: 26px; } }
 </style>
 </head>
 <body>
+  <div class="photo-modal" id="photoModal" role="dialog" aria-modal="true" aria-label="Foto banner">
+    <button class="photo-modal-close" id="photoModalClose" type="button" aria-label="Tutup">✕</button>
+    <div class="photo-modal-inner">
+      <img id="photoModalImg" src="" alt="Foto banner ukuran penuh">
+      <div class="photo-modal-caption" id="photoModalCaption"></div>
+    </div>
+  </div>
+
   <header class="topbar">
-    <img src="assets/logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
+    <img src="logo_aqiqah.png" alt="Aqiqah Nurul Hayat" class="logo">
+    <h3>Cabang Malang</h3>
     <div class="right">
       <span class="username" id="usernameLabel"></span>
       <button class="btn btn-outline" id="logoutBtn" style="padding:8px 16px; font-size:14px;">Keluar</button>
@@ -72,6 +90,10 @@
         <div class="big"><span id="monthlyCount">0</span> <span class="of">/ 1000 banner terpasang</span></div>
         <div class="label" id="monthLabel">Bulan ini</div>
       </div>
+      <div class="hero-fee">
+        <div class="fee-amount" id="totalFeeAmount">Rp 0</div>
+        <div class="fee-label">Biaya terverifikasi ke vendor</div>
+      </div>
     </div>
 
     <h2 class="section-title">Peta lokasi pemasangan</h2>
@@ -90,12 +112,14 @@
           <label for="dateTo">Sampai tanggal</label>
           <input type="date" id="dateTo">
         </div>
+        <button class="btn btn-outline" id="clearFilterBtn" type="button" style="padding:10px 18px; font-size:14px;">Hapus filter</button>
         <button class="btn btn-outline" id="exportBtn" style="padding:10px 18px; font-size:14px;">Unduh CSV</button>
       </div>
+      <div class="filtered-fee-row" id="filteredFeeRow">Biaya terverifikasi: <strong id="filteredFeeAmount">Rp 0</strong></div>
       <div class="table-scroll">
         <table id="reportTable">
           <thead>
-            <tr><th>Foto</th><th>Tanggal</th><th>Waktu</th><th>Koordinat</th></tr>
+            <tr><th>Foto</th><th>Tanggal</th><th>Waktu</th><th>Koordinat</th><th>Status</th><th>Aksi</th></tr>
           </thead>
           <tbody id="reportBody"></tbody>
         </table>
@@ -121,8 +145,26 @@
       window.location.href = 'login.html';
     });
 
+    const photoModal = document.getElementById('photoModal');
+    const photoModalImg = document.getElementById('photoModalImg');
+    const photoModalCaption = document.getElementById('photoModalCaption');
+    const photoModalClose = document.getElementById('photoModalClose');
+
+    function openPhotoModal(url, caption) {
+      photoModalImg.src = url;
+      photoModalCaption.textContent = caption || '';
+      photoModal.classList.add('open');
+    }
+    function closePhotoModal() {
+      photoModal.classList.remove('open');
+      photoModalImg.src = '';
+    }
+    photoModalClose.addEventListener('click', closePhotoModal);
+    photoModal.addEventListener('click', (e) => { if (e.target === photoModal) closePhotoModal(); });
+
     let allReports = [];
     let map, markerLayer;
+    let markersMap = {}; 
 
     function initMap() {
       map = L.map('map').setView([-7.98, 112.63], 12);
@@ -135,11 +177,13 @@
 
     function renderMap(reports) {
       markerLayer.clearLayers();
+      markersMap = {};
       const points = reports.filter(r => r.latitude && r.longitude);
       points.forEach(r => {
-        L.marker([r.latitude, r.longitude])
-          .bindPopup(new Date(r.timestamp).toLocaleString('id-ID'))
+        const marker = L.marker([r.latitude, r.longitude])
+          .bindPopup(`<b>Dilaporkan:</b> ${new Date(r.timestamp).toLocaleString('id-ID')}<br><a href="${r.fotoUrl}" target="_blank">Lihat Foto</a>`)
           .addTo(markerLayer);
+        markersMap[r.id] = marker;
       });
       if (points.length) {
         map.fitBounds(L.latLngBounds(points.map(r => [r.latitude, r.longitude])), { padding: [24, 24] });
@@ -151,9 +195,28 @@
       document.getElementById('monthlyCount').textContent = count;
       document.getElementById('progressPct').textContent = pct + '%';
       document.getElementById('monthLabel').textContent = new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
       const circumference = 314;
       document.getElementById('progressCircle').style.strokeDashoffset = circumference - (circumference * pct / 100);
+    }
+
+    function formatRupiah(n) { return Number(n || 0).toLocaleString('id-ID'); }
+
+    function distanceMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const toRad = x => x * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.asin(Math.sqrt(a));
+    }
+
+    const NEARBY_THRESHOLD_METERS = 20;
+    function findNearbyVerified(report) {
+      if (!report.latitude || !report.longitude) return null;
+      return allReports.find(other =>
+        other.id !== report.id && other.verified && other.latitude && other.longitude &&
+        distanceMeters(Number(report.latitude), Number(report.longitude), Number(other.latitude), Number(other.longitude)) < NEARBY_THRESHOLD_METERS
+      );
     }
 
     function renderTable(reports) {
@@ -162,15 +225,56 @@
       tbody.innerHTML = '';
       if (!reports.length) { emptyState.style.display = 'block'; return; }
       emptyState.style.display = 'none';
+      
       reports.forEach(r => {
         const d = new Date(r.timestamp);
         const tr = document.createElement('tr');
+        const nearby = !r.verified ? findNearbyVerified(r) : null;
+        
         tr.innerHTML = `
           <td class="thumb"><img src="${r.fotoUrl}" alt="Foto banner" loading="lazy"></td>
           <td>${d.toLocaleDateString('id-ID')}</td>
           <td>${d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</td>
           <td>${r.latitude && r.longitude ? Number(r.latitude).toFixed(5) + ', ' + Number(r.longitude).toFixed(5) : '—'}</td>
+          <td>
+            ${r.verified ? '<span class="badge-verified">✓ Rp ' + formatRupiah(r.fee) + '</span>' : '<span class="badge-unverified">Belum diverifikasi</span>'}
+            ${nearby ? '<div class="warn-nearby">⚠ Dekat laporan lain yang sudah diverifikasi (' + new Date(nearby.timestamp).toLocaleDateString('id-ID') + ')</div>' : ''}
+          </td>
+          <td class="actionCell"></td>
         `;
+        
+        const caption = d.toLocaleDateString('id-ID', { dateStyle: 'long' }) + ' · ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        tr.querySelector('.thumb img').addEventListener('click', () => openPhotoModal(r.fotoUrl, caption));
+
+        const actionContainer = document.createElement('div');
+        actionContainer.style.display = 'flex';
+        actionContainer.style.gap = '8px';
+
+        if (r.latitude && r.longitude) {
+          const mapBtn = document.createElement('button');
+          mapBtn.className = 'btn btn-outline';
+          mapBtn.style.padding = '6px 12px';
+          mapBtn.style.fontSize = '12px';
+          mapBtn.textContent = '📍 Peta';
+          mapBtn.title = 'Lihat titik di peta';
+          mapBtn.addEventListener('click', () => {
+            document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            map.flyTo([r.latitude, r.longitude], 18, { animate: true, duration: 1.5 });
+            if(markersMap[r.id]) {
+              setTimeout(() => markersMap[r.id].openPopup(), 1500);
+            }
+          });
+          actionContainer.appendChild(mapBtn);
+        }
+
+        const btn = document.createElement('button');
+        btn.className = r.verified ? 'btn-text-danger' : 'btn btn-primary verify-btn';
+        btn.textContent = r.verified ? 'Batalkan' : 'Verifikasi';
+        btn.style.padding = '6px 12px';
+        btn.addEventListener('click', () => toggleVerify(r.id, !r.verified, btn));
+        actionContainer.appendChild(btn);
+
+        tr.querySelector('.actionCell').appendChild(actionContainer);
         tbody.appendChild(tr);
       });
     }
@@ -188,23 +292,66 @@
       const filtered = getFiltered();
       renderTable(filtered);
       renderMap(filtered);
+      renderFilteredFee(filtered);
+    }
+
+    function renderFilteredFee(filtered) {
+      const total = filtered.reduce((sum, r) => sum + (r.fee || 0), 0);
+      document.getElementById('filteredFeeAmount').textContent = 'Rp ' + formatRupiah(total);
+    }
+
+    function computeMonthlyTotalFee() {
+      const now = new Date();
+      return allReports
+        .filter(r => { const d = new Date(r.timestamp); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+        .reduce((sum, r) => sum + (r.fee || 0), 0);
+    }
+
+    function renderTotalFee() {
+      document.getElementById('totalFeeAmount').textContent = 'Rp ' + formatRupiah(computeMonthlyTotalFee());
+    }
+
+    async function toggleVerify(id, verified, btn) {
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Memproses…';
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'verifyReport', token, id, verified })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        const report = allReports.find(r => r.id === id);
+        if (report) { report.verified = data.verified; report.fee = data.fee; }
+        applyFilter();
+        renderTotalFee();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        alert('Gagal memperbarui verifikasi: ' + err.message);
+      }
     }
 
     document.getElementById('dateFrom').addEventListener('change', applyFilter);
     document.getElementById('dateTo').addEventListener('change', applyFilter);
+    document.getElementById('clearFilterBtn').addEventListener('click', () => {
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      applyFilter();
+    });
 
     document.getElementById('exportBtn').addEventListener('click', () => {
       const rows = getFiltered();
-      let csv = 'Tanggal,Waktu,Latitude,Longitude,URL Foto\n';
+      let csv = 'Tanggal,Waktu,Latitude,Longitude,URL Foto,Terverifikasi,Biaya\n';
       rows.forEach(r => {
         const d = new Date(r.timestamp);
-        csv += `${d.toLocaleDateString('id-ID')},${d.toLocaleTimeString('id-ID')},${r.latitude || ''},${r.longitude || ''},${r.fotoUrl}\n`;
+        csv += `${d.toLocaleDateString('id-ID')},${d.toLocaleTimeString('id-ID')},${r.latitude || ''},${r.longitude || ''},${r.fotoUrl},${r.verified ? 'Ya' : 'Tidak'},${r.fee || 0}\n`;
       });
       const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'laporan-banner-pohon.csv';
-      a.click();
+      a.href = url; a.download = 'laporan-banner.csv'; a.click();
       URL.revokeObjectURL(url);
     });
 
@@ -215,12 +362,11 @@
         if (!data.ok) throw new Error(data.error);
         allReports = data.reports;
         renderProgress(data.monthlyCount, data.monthlyTarget);
-        renderTable(allReports);
-        renderMap(allReports);
+        applyFilter();
+        renderTotalFee();
       } catch (err) {
         if (err.message && err.message.includes('login')) {
-          sessionStorage.clear();
-          window.location.href = 'login.html';
+          sessionStorage.clear(); window.location.href = 'login.html';
         }
       }
     }
@@ -233,20 +379,14 @@
         const panel = document.getElementById('pendingPanel');
         panel.innerHTML = '';
         data.pending.forEach(u => {
-          const row = document.createElement('div');
-          row.className = 'pending-row';
-          const nameSpan = document.createElement('span');
-          nameSpan.textContent = u.username;
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-primary';
-          btn.textContent = 'Setujui';
+          const row = document.createElement('div'); row.className = 'pending-row';
+          const nameSpan = document.createElement('span'); nameSpan.textContent = u.username;
+          const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'Setujui';
           btn.addEventListener('click', () => approveUser(u.username, btn));
-          row.appendChild(nameSpan);
-          row.appendChild(btn);
-          panel.appendChild(row);
+          row.appendChild(nameSpan); row.appendChild(btn); panel.appendChild(row);
         });
         document.getElementById('pendingSection').style.display = 'block';
-      } catch (err) { /* bukan fitur kritis, diamkan kalau gagal */ }
+      } catch (err) {}
     }
 
     async function approveUser(username, btn) {
@@ -261,8 +401,7 @@
         if (!data.ok) throw new Error(data.error);
         loadPendingUsers();
       } catch (err) {
-        btn.disabled = false; btn.textContent = 'Setujui';
-        alert('Gagal menyetujui: ' + err.message);
+        btn.disabled = false; btn.textContent = 'Setujui'; alert('Gagal menyetujui: ' + err.message);
       }
     }
 
